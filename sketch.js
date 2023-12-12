@@ -1,13 +1,18 @@
 let scaleFactor = 0.05;
-let tiles = [];
+let tiles;
 let offsetX = 0;
 let offsetY = 0;
+let selected;
 
 function setup() {
     createCanvas(768, 432);
+    tiles = new Array(height);
+
+    for (let i = 0; i < height; i++) {
+        tiles[i] = new Array(width);
+    }
     createTiles();
     noStroke();
-    angleMode(DEGREES);
 }
 
 function draw() {
@@ -15,7 +20,6 @@ function draw() {
 
 
     // Calculate offset based on mouse position
-
 
     // Apply the offset
     offsetX = Math.ceil(constrain(mouseX,0,width));
@@ -41,16 +45,44 @@ function draw() {
     text(`OffsetX: ${offsetX.toFixed(2)}, OffsetY: ${offsetY.toFixed(2)}, Number of Tiles Drawn: ${count}`, 10, 20);
     text(`MaxX: ${Math.ceil((offsetX + width)/3)}, MaxY: ${Math.ceil((offsetY + height)/3)}`,10,40);
     text(`MinX: ${Math.floor(offsetX/3)}, MinY: ${Math.floor(offsetY/3)}`,10,60);
-    text(`MouseX: ${mouseX} MouseY: ${mouseY}`,10,100);
+    text(`MouseX: ${mouseX} MouseY: ${mouseY}`,10,80);
 }
 
 
 
+function mousePressed() {
+    // Calculate tile coordinates based on mouse position and offset
+    let x = Math.floor((mouseX + offsetX) / 3);
+    let y = Math.floor((mouseY + offsetY) / 3);
+
+    // Check if the coordinates are within the valid range
+    if (x >= 0 && y >= 0 && x < width && y < height) {
+        // Update the color of the tile under the mouse
+        let temp = tiles[y][x];
+        // Must select land
+        if (temp.n > 0.5) {
+            if (selected != null)
+                selected.c = getColor(selected.n);
+            // Highlight selected tile
+            tiles[y][x].c = color(255, 0, 0);
+            selected = tiles[y][x];
+        }
+    }
+}
+function keyPressed() {
+    if (key = 'k') {
+        if (selected != null) {
+            offsetX = selected.x;
+            offsetY = selected.y;
+        }
+    }
+}
+
+
 function createTiles() {
     for (let y = 0; y < height; y++) {
-        tiles[y] = [];
         for (let x = 0; x < width; x++) {
-            let n = noise((x+y/4) * scaleFactor, (y+x/2) * scaleFactor);
+            let n = noise((x+y/4) * scaleFactor, (y) * scaleFactor);
             tiles[y][x] = new Tile(x, y, n);
         }
     }
