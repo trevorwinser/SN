@@ -6,13 +6,20 @@ let selected;
 
 function setup() {
     createCanvas(768, 432);
+    noStroke();
     tiles = new Array(height);
 
     for (let i = 0; i < height; i++) {
         tiles[i] = new Array(width);
     }
     createTiles();
-    noStroke();
+
+    for (let i = 0; i < 100; i++) {
+        generateRiver();
+    }
+
+    tiles[250][700].c = color(255,0,0);
+    
 }
 
 function draw() {
@@ -22,8 +29,8 @@ function draw() {
     // Calculate offset based on mouse position
 
     // Apply the offset
-    offsetX = Math.ceil(constrain(mouseX,0,width));
-    offsetY = Math.ceil(constrain(mouseY,0,height));
+    offsetX = ceil(map(constrain(mouseX,0,width),0,width,0,width*2));
+    offsetY = ceil(map(constrain(mouseY,0,height),0,height,0,height*2));
     push();
     // translate(width/2,height/2);
     translate(-offsetX, -offsetY);
@@ -31,29 +38,29 @@ function draw() {
     
     
     let count = 0;
-    for (let y = Math.floor(offsetY/3); y < Math.ceil((offsetY + height)/3); y++) {
-        for (let x = Math.floor((offsetX)/3); x < Math.ceil((offsetX + width)/3); x++) {
+    for (let y = floor(offsetY/3); y < ceil((offsetY + height)/3); y++) {
+        for (let x = floor((offsetX)/3); x < ceil((offsetX + width)/3); x++) {
           tiles[y][x].draw();  
           count++;
         }
     }
     fill(0);
-    text("0,0",0,0);
+    text("0,0",0,10);
     pop();
     fill(0);
     textSize(16);
-    text(`OffsetX: ${offsetX.toFixed(2)}, OffsetY: ${offsetY.toFixed(2)}, Number of Tiles Drawn: ${count}`, 10, 20);
-    text(`MaxX: ${Math.ceil((offsetX + width)/3)}, MaxY: ${Math.ceil((offsetY + height)/3)}`,10,40);
-    text(`MinX: ${Math.floor(offsetX/3)}, MinY: ${Math.floor(offsetY/3)}`,10,60);
-    text(`MouseX: ${mouseX} MouseY: ${mouseY}`,10,80);
+    if (selected != null)
+        text(`SelectedX: ${selected.x} SelectedY: ${selected.y}`,10,20);
+    text(`Width: ${width} Height: ${height}`,10,40);
+    text(`mouseX: ${offsetX} mouseY: ${offsetY}`,10,60);
 }
 
 
 
 function mousePressed() {
     // Calculate tile coordinates based on mouse position and offset
-    let x = Math.floor((mouseX + offsetX) / 3);
-    let y = Math.floor((mouseY + offsetY) / 3);
+    let x = floor((mouseX + offsetX) / 3);
+    let y = floor((mouseY + offsetY) / 3);
 
     // Check if the coordinates are within the valid range
     if (x >= 0 && y >= 0 && x < width && y < height) {
@@ -82,11 +89,78 @@ function keyPressed() {
 function createTiles() {
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let n = noise((x+y/4) * scaleFactor, (y) * scaleFactor);
+            let n = round(noise((x+y/4) * scaleFactor, (y) * scaleFactor),2);
             tiles[y][x] = new Tile(x, y, n);
         }
     }
 }
+
+function generateRiver() {
+    let x = floor(random(width));
+    let y = floor(random(height));
+    console.log(x);
+    console.log(y);
+
+    // Check if the starting tile is within the valid range
+    if (x < 0 || x >= tiles[0].length || y < 0 || y >= tiles.length) {
+        console.error("Invalid starting point");
+        return;
+    }
+
+    // Initialize tilesVisited list with the first tile
+    let tilesVisited = [tiles[y][x]];
+
+    while (tiles[y] && tiles[y][x] && tiles[y][x].n > 0.5 && tilesVisited.length < 200) {
+        tiles[y][x].c = color(100, 200, 200);
+        tiles[y][x].tn = "sw";
+
+        let ns = [
+            (tiles[y + 1] && tiles[y + 1][x] != null && !tilesVisited.includes(tiles[y + 1][x])) ? tiles[y + 1][x].n : null,
+            (tiles[y - 1] && tiles[y - 1][x] != null && !tilesVisited.includes(tiles[y - 1][x])) ? tiles[y - 1][x].n : null,
+            (tiles[y][x + 1] != null && !tilesVisited.includes(tiles[y][x + 1])) ? tiles[y][x + 1].n : null,
+            (tiles[y][x - 1] != null && !tilesVisited.includes(tiles[y][x - 1])) ? tiles[y][x - 1].n : null
+        ];
+
+        // Filter out null values from ns
+        ns = ns.filter(value => value !== null);
+
+        // If the array is empty, break the loop
+        if (ns.length === 0) {
+            break;
+        }
+
+        // Introduce randomness in selecting the next direction
+        let randomIndex = floor(random(ns.length));
+        let nextIndex = ns.length > 1 ? randomIndex : 0; // If there's only one direction, choose it directly
+
+        let minN = ns[nextIndex];
+
+        // Find the index of the minimum value in ns
+        let minIndex = ns.indexOf(minN);
+
+        // Update x and y accordingly
+        if (minIndex === 0) {
+            y++;
+        } else if (minIndex === 1) {
+            y--;
+        } else if (minIndex === 2) {
+            x++;
+        } else if (minIndex === 3) {
+            x--;
+        }
+
+        // Check if the updated coordinates are within the valid range
+        if (y < 0 || y >= tiles.length || x < 0 || x >= tiles[0].length) {
+            console.error("Coordinates out of range");
+            break;
+        }
+
+        // Add the current tile to the tilesVisited list
+        tilesVisited.push(tiles[y][x]);
+    }
+}
+
+
 
 function getColor(n) {
     let c = color(20, 120, 120);
@@ -101,6 +175,7 @@ function getColor(n) {
     if (n > 0.95) c = color(250, 25, 25);
     return c;
 }
+
 
 function getTileName(n) {       //Use later for conditionals
     let tn = "dw";              //deep water
