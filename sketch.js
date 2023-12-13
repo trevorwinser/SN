@@ -14,7 +14,7 @@ function setup() {
     }
     createTiles();
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
         generateRiver();
     }
 
@@ -25,30 +25,21 @@ function setup() {
 function draw() {
     background(220);
 
-
     // Calculate offset based on mouse position
-
-    // Apply the offset
     offsetX = ceil(map(constrain(mouseX,0,width),0,width,0,width*2));
     offsetY = ceil(map(constrain(mouseY,0,height),0,height,0,height*2));
+    
+    
     push();
-    // translate(width/2,height/2);
     translate(-offsetX, -offsetY);
-
-    
-    
-    let count = 0;
     for (let y = floor(offsetY/3); y < ceil((offsetY + height)/3); y++) {
         for (let x = floor((offsetX)/3); x < ceil((offsetX + width)/3); x++) {
           tiles[y][x].draw();  
-          count++;
         }
     }
-    fill(0);
-    text("0,0",0,10);
     pop();
+
     fill(0);
-    textSize(16);
     if (selected != null)
         text(`SelectedX: ${selected.x} SelectedY: ${selected.y}`,10,20);
     text(`Width: ${width} Height: ${height}`,10,40);
@@ -98,8 +89,6 @@ function createTiles() {
 function generateRiver() {
     let x = floor(random(width));
     let y = floor(random(height));
-    console.log(x);
-    console.log(y);
 
     // Check if the starting tile is within the valid range
     if (x < 0 || x >= tiles[0].length || y < 0 || y >= tiles.length) {
@@ -110,9 +99,8 @@ function generateRiver() {
     // Initialize tilesVisited list with the first tile
     let tilesVisited = [tiles[y][x]];
 
-    while (tiles[y] && tiles[y][x] && tiles[y][x].n > 0.5 && tilesVisited.length < 200) {
+    while (tiles[y] && tiles[y][x] && tiles[y][x].n > 0.5) {
         tiles[y][x].c = color(100, 200, 200);
-        tiles[y][x].tn = "sw";
 
         let ns = [
             (tiles[y + 1] && tiles[y + 1][x] != null && !tilesVisited.includes(tiles[y + 1][x])) ? tiles[y + 1][x].n : null,
@@ -124,7 +112,7 @@ function generateRiver() {
         // Filter out null values from ns
         ns = ns.filter(value => value !== null);
 
-        // If the array is empty, break the loop
+        // Empty array -> no new tiles
         if (ns.length === 0) {
             break;
         }
@@ -162,6 +150,7 @@ function generateRiver() {
 
 
 
+
 function getColor(n) {
     let c = color(20, 120, 120);
     if (n > 0.3) c = color(70, 180, 180);
@@ -171,24 +160,8 @@ function getColor(n) {
     if (n > 0.65) c = color(0, 100, 0);
     if (n > 0.75) c = color(140, 140, 155);
     if (n > 0.83) c = color(80, 80, 95);
-    if (n > 85) c = color(220, 220, 250);
-    if (n > 0.95) c = color(250, 25, 25);
+    if (n > 0.85) c = color(220, 220, 250);
     return c;
-}
-
-
-function getTileName(n) {       //Use later for conditionals
-    let tn = "dw";              //deep water
-    if (n > 0.3) tn = "w";      //water
-    if (n > 0.45) tn = "sw";    //shallow water
-    if (n > 0.5) tn = "b";      //beach
-    if (n > 0.515) tn = "p";    //plains
-    if (n > 0.65) tn = "ep";    //elevated plains
-    if (n > 0.75) tn = "h";     //hill
-    if (n > 0.83) tn = "m";     //mountain
-    if (n > 85) tn = "s";       //summit
-    if (n > 0.95) tn = "v";     //volcano
-    return tn;
 }
 
 class Tile {
@@ -197,7 +170,6 @@ class Tile {
         this.y = y;
         this.n = n;
         this.c = getColor(n);
-        this.tn = getTileName(n);
     }
     draw() {
         fill(this.c);
