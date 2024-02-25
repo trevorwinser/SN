@@ -3,6 +3,7 @@ let tiles;
 let offsetX = 0;
 let offsetY = 0;
 let selected;
+let zoom = 1;
 
 function setup() {
     createCanvas(768, 432);
@@ -67,6 +68,20 @@ function mousePressed() {
         }
     }
 }
+
+function mouseWheel(event) {
+    if (event.delta > 0) {
+        // Mouse wheel up
+        zoom *= 1.1; // You can adjust the zoom factor as needed
+    } else {
+        // Mouse wheel down
+        zoom /= 1.1; // You can adjust the zoom factor as needed
+    }
+    
+    // Recreate tiles with the updated zoom value
+    createTiles();
+}
+
 function keyPressed() {
     if (key = 'k') {
         if (selected != null) {
@@ -80,7 +95,7 @@ function keyPressed() {
 function createTiles() {
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let n = round(noise((x+y/4) * scaleFactor, (y) * scaleFactor),2);
+            let n = round(noise(((x+y/4) * scaleFactor)/zoom, ((y) * scaleFactor)/zoom),2);
             tiles[y][x] = new Tile(x, y, n);
         }
     }
@@ -147,9 +162,6 @@ function generateRiver() {
         tilesVisited.push(tiles[y][x]);
     }
 }
-
-
-
 
 function getColor(n) {
     let c = color(20, 120, 120);
